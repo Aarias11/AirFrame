@@ -1,0 +1,69 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+
+model User {
+  id         String     @id @default(uuid())
+  email      String     @unique
+  createdAt  DateTime   @default(now())
+
+  locations  Location[]
+  media      Media[]
+}
+
+
+model Location {
+  id         String     @id @default(uuid())
+  userId     String
+  name       String?
+  latitude   Float
+  longitude  Float
+  createdAt  DateTime   @default(now())
+
+  user       User       @relation(fields: [userId], references: [id])
+  media      Media[]
+
+  @@index([userId])
+  @@index([latitude, longitude])
+}
+
+
+model Media {
+  id          String        @id @default(uuid())
+  userId      String
+  locationId  String
+  type        MediaType
+  url         String
+  createdAt   DateTime      @default(now())
+
+  user        User          @relation(fields: [userId], references: [id])
+  location    Location      @relation(fields: [locationId], references: [id])
+  metadata    MediaMetadata?
+
+  @@index([userId])
+  @@index([locationId])
+}
+
+
+model MediaMetadata {
+  id          String   @id @default(uuid())
+  mediaId     String   @unique
+  capturedAt  DateTime?
+  altitude    Float?
+  camera      String?
+  createdAt   DateTime @default(now())
+
+  media       Media    @relation(fields: [mediaId], references: [id])
+}
+
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
