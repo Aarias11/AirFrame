@@ -1,4 +1,4 @@
-import { prisma } from "../../data/db/prisma.js"
+import prisma from "../../data/db/prisma.js"
 import type { Prisma } from "@prisma/client"
 
 interface CreateMediaInput {
@@ -35,13 +35,15 @@ export async function createMediaRecords(
     })
 
     if (metadata) {
+      const metadataData: Prisma.MediaMetadataCreateInput = {
+        media: { connect: { id: createdMedia.id } },
+        ...(metadata.capturedAt !== undefined && { capturedAt: metadata.capturedAt }),
+        ...(metadata.altitude !== undefined && { altitude: metadata.altitude }),
+        ...(metadata.camera !== undefined && { camera: metadata.camera }),
+      }
+
       await tx.mediaMetadata.create({
-        data: {
-          mediaId: createdMedia.id,
-          capturedAt: metadata.capturedAt,
-          altitude: metadata.altitude,
-          camera: metadata.camera,
-        },
+        data: metadataData,
       })
     }
 

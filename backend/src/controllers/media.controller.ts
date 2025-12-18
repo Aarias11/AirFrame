@@ -5,6 +5,10 @@ import { resolveLocation } from "../core/services/resolveLocation.js"
 import { createMediaRecords } from "../core/services/createMediaRecords.js"
 
 export async function uploadMediaController(req: Request, res: Response) {
+  const user = req.user as { id: string } | undefined
+  if (!user) {
+    return res.status(401).json({ error: "Unauthorized" })
+  }
   try {
     /**
      * STEP 1: Receive and validate file input
@@ -30,10 +34,14 @@ export async function uploadMediaController(req: Request, res: Response) {
      * - Create or reuse a Location record
      */
     const location = await resolveLocation({
-      userId: "stub-user-id",
-      latitude: metadata.latitude,
-      longitude: metadata.longitude,
-      manualLocation: req.body?.location,
+      userId: user.id,
+      ...(metadata.latitude !== undefined
+        ? { latitude: metadata.latitude }
+        : {}),
+      ...(metadata.longitude !== undefined
+        ? { longitude: metadata.longitude }
+        : {}),
+      ...(req.body?.location ? { manualLocation: req.body.location } : {}),
     })
 
     /**
@@ -50,7 +58,7 @@ export async function uploadMediaController(req: Request, res: Response) {
      * - Associate Media with Location and User
      */
     await createMediaRecords({
-      userId: "stub-user-id",
+      userId: user.id,
       locationId: location.id,
       media: {
         type: file.mimetype.startsWith("video") ? "VIDEO" : "IMAGE",
