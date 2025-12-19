@@ -1,66 +1,81 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client"
 
-export default function Home() {
+import { useEffect, useRef } from "react"
+import mapboxgl from "mapbox-gl"
+import "mapbox-gl/dist/mapbox-gl.css"
+import { useMap } from "@/hooks/useMap"
+
+export default function MapPage() {
+  const mapRef = useRef<mapboxgl.Map | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const markerRefs = useRef<mapboxgl.Marker[]>([])
+
+  const { markers, selectLocation } = useMap()
+
+  // Initialize map ONCE
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return
+
+    mapboxgl.accessToken =
+      process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string
+
+    mapRef.current = new mapboxgl.Map({
+      container: containerRef.current,
+      style: "mapbox://styles/mapbox/dark-v11",
+      center: [-98.5795, 39.8283],
+      zoom: 4,
+      pitch: 0,
+      bearing: 0,
+      antialias: false,
+      projection: "mercator",
+    })
+
+    mapRef.current.setPitch(0)
+    mapRef.current.setBearing(0)
+
+    mapRef.current.dragRotate.disable()
+    mapRef.current.touchZoomRotate.disableRotation()
+
+    mapRef.current.on("load", () => {
+      mapRef.current?.setPitch(0)
+    })
+  }, [])
+
+  // Render markers when data changes
+  useEffect(() => {
+    if (!mapRef.current) return
+
+    // Clear existing markers
+    markerRefs.current.forEach((m) => m.remove())
+    markerRefs.current = []
+
+    markers.forEach((marker) => {
+      const el = document.createElement("div")
+      el.style.width = "10px"
+      el.style.height = "10px"
+      el.style.borderRadius = "50%"
+      el.style.background = "#000"
+      el.style.cursor = "pointer"
+
+      el.addEventListener("click", () => {
+        selectLocation(marker.locationId)
+      })
+
+      const mapMarker = new mapboxgl.Marker(el)
+        .setLngLat([marker.longitude, marker.latitude])
+        .addTo(mapRef.current!)
+
+      markerRefs.current.push(mapMarker)
+    })
+  }, [markers, selectLocation])
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+    <div
+      ref={containerRef}
+      style={{
+        width: "100vw",
+        height: "100vh",
+      }}
+    />
+  )
 }
