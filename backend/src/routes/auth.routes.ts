@@ -1,5 +1,9 @@
 import express from "express"
 import passport from "passport"
+import {
+  getSessionController,
+  logoutController,
+} from "../controllers/auth.controller.js"
 
 const router = express.Router()
 
@@ -11,13 +15,16 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    session: false,
+    session: true,
     failureRedirect: "/auth/failure",
   }),
   (req, res) => {
-    // For now, just return the user
-    res.json({ user: req.user })
+    // Successful login or signup → redirect to frontend Map page
+    res.redirect(`${process.env.FRONTEND_URL}/map`)
   }
 )
+
+router.get("/session", getSessionController)
+router.post("/logout", logoutController)
 
 export default router

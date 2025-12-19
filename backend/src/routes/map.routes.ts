@@ -1,12 +1,21 @@
 import express from "express"
-import { getMapLocationsController } from "../controllers/map.controller.js"
+import {
+  getMapMarkersController,
+  getLocationPreviewController,
+} from "../controllers/map.controller.js"
 
 const router = express.Router()
 
 /**
- * GET /map/locations
- * Returns lightweight marker data for the map view.
+ * GET /map/markers
+ * Lightweight marker data for map rendering
  */
-router.get("/locations", getMapLocationsController)
+router.get("/markers", getMapMarkersController)
+
+/**
+ * GET /map/location/:locationId
+ * Preview data for a single map location
+ */
+router.get("/location/:locationId", getLocationPreviewController)
 
 export default router

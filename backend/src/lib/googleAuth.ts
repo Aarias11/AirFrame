@@ -29,3 +29,19 @@ passport.use(
     }
   )
 )
+
+passport.serializeUser((user: any, done) => {
+  // Store only the user ID in the session
+  done(null, user.id)
+})
+
+passport.deserializeUser(async (id: string, done) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id },
+    })
+    done(null, user)
+  } catch (error) {
+    done(error, null)
+  }
+})
